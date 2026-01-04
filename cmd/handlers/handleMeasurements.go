@@ -10,19 +10,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func HandleCreateMeasurement(c echo.Context) error {
+type MeasurementHandler struct {
+	repo *repositories.MeasurementRepository
+}
+
+func NewMeasurementHandler(repo *repositories.MeasurementRepository) *MeasurementHandler {
+	return &MeasurementHandler{repo: repo}
+}
+
+func (h *MeasurementHandler) HandleCreateMeasurement(c echo.Context) error {
 	measurement := models.Measurements{}
 	if err := c.Bind(&measurement); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	newMeasurement, err := repositories.CreateMeasurement(measurement)
+	newMeasurement, err := h.repo.CreateMeasurement(measurement)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusCreated, newMeasurement)
 }
 
-func HandleUpdateMeasurement(c echo.Context) error {
+func (h *MeasurementHandler) HandleUpdateMeasurement(c echo.Context) error {
 	id := c.Param("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -32,7 +40,7 @@ func HandleUpdateMeasurement(c echo.Context) error {
 
 	measurement := models.Measurements{}
 	c.Bind(&measurement)
-	updatedMeasurement, err := repositories.UpdateMeasurement(measurement, idInt)
+	updatedMeasurement, err := h.repo.UpdateMeasurement(measurement, idInt)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

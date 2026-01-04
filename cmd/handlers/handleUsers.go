@@ -10,25 +10,33 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func HandleCreateUser(c echo.Context) error {
+type UserHandler struct {
+	repo *repositories.UserRepository
+}
+
+func NewUserHandler(repo *repositories.UserRepository) *UserHandler {
+	return &UserHandler{repo: repo}
+}
+
+func (h *UserHandler) HandleCreateUser(c echo.Context) error {
 	user := models.User{}
 	c.Bind(&user)
-	newUser, err := repositories.CreateUser(user)
+	newUser, err := h.repo.CreateUser(user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusCreated, newUser)
 }
 
-func HandleGetUsers(c echo.Context) error {
-	users, err := repositories.GetUsers()
+func (h *UserHandler) HandleGetUsers(c echo.Context) error {
+	users, err := h.repo.GetUsers()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, users)
 }
 
-func HandleUpdateUser(c echo.Context) error {
+func (h *UserHandler) HandleUpdateUser(c echo.Context) error {
 	id := c.Param("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -38,7 +46,7 @@ func HandleUpdateUser(c echo.Context) error {
 
 	user := models.User{}
 	c.Bind(&user)
-	updatedUser, err := repositories.UpdateUser(user, idInt)
+	updatedUser, err := h.repo.UpdateUser(user, idInt)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

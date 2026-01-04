@@ -2,16 +2,23 @@
 package repositories
 
 import (
+	"database/sql"
 	"fitness-api/cmd/models"
-	"fitness-api/cmd/storage"
 	"time"
 )
 
-func GetUsers() ([]models.User, error) {
-	db := storage.GetDB()
+type UserRepository struct {
+	db *sql.DB
+}
+
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{db: db}
+}
+
+func (r *UserRepository) GetUsers() ([]models.User, error) {
 	sqlStatement := `SELECT id, name, email, password, created_at, updated_at FROM users`
 
-	rows, err := db.Query(sqlStatement)
+	rows, err := r.db.Query(sqlStatement)
 	if err != nil {
 		return nil, err
 	}
@@ -29,24 +36,22 @@ func GetUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func CreateUser(user models.User) (models.User, error) {
-	db := storage.GetDB()
+func (r *UserRepository) CreateUser(user models.User) (models.User, error) {
 	sqlStatement := `INSERT INTO users (name, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	err := db.QueryRow(sqlStatement, user.Name, user.Email, user.Password, user.CreatedAt, user.UpdatedAt).Scan(&user.Id)
+	err := r.db.QueryRow(sqlStatement, user.Name, user.Email, user.Password, user.CreatedAt, user.UpdatedAt).Scan(&user.Id)
 	if err != nil {
 		return user, err
 	}
 	return user, nil
 }
 
-func UpdateUser(user models.User, id int) (models.User, error) {
-	db := storage.GetDB()
+func (r *UserRepository) UpdateUser(user models.User, id int) (models.User, error) {
 	sqlStatement := `
     UPDATE users
     SET name = $2, email = $3, password = $4, updated_at = $5
     WHERE id = $1
     RETURNING id`
-	err := db.QueryRow(sqlStatement, id, user.Name, user.Email, user.Password, time.Now()).Scan(&id)
+	err := r.db.QueryRow(sqlStatement, id, user.Name, user.Email, user.Password, time.Now()).Scan(&id)
 	if err != nil {
 		return models.User{}, err
 	}
